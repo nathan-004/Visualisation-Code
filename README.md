@@ -1,2 +1,2 @@
 # Visualisation-Code
-Visualisation de code Python dans une application C++
+Visualisation de code Python dans une application C++ avec une API Python.
