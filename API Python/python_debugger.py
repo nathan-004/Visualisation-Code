@@ -141,7 +141,16 @@ class PythonInterpreter:
         """Executes the code step by step and stores the results in self.env and self.values_visualization."""
         
         for step in self.steps:
-            pass
+            atr = f"execute_{step['type'].lower()}" # Nom de la fonction
+
+            method = getattr(self, atr, None)
+
+            if method:
+                method(step)
+
+
+    def execute_assign(self, step):
+        pass
 
 python_code = """
 a= 2
@@ -156,6 +165,7 @@ print(result)
 PST = PythonSyntaxTree(python_code) # Constant
 PST.analyse_syntax_tree()
 PST.print()
+print()
 PI = PythonInterpreter(steps=PST.steps)
 PI.execute()
 
