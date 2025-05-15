@@ -133,12 +133,23 @@ class PythonInterpreter:
             PST = PythonSyntaxTree(code)
             PST.analyse_syntax_tree()
             self.steps = PST.steps
+        print(self.steps)
 
         self.env = {} # Environment to store variables and their values
         self.values_visualization = [] # List to store values for visualization over time
 
-    def execute(self):
+    def execute(self, step=None):
         """Executes the code step by step and stores the results in self.env and self.values_visualization."""
+        if step is not None:
+            atr = f"execute_{step['type'].lower()}" # Nom de la fonction
+
+            method = getattr(self, atr, None)
+
+            if method:
+                val = method(step, return_value=True)
+                return val
+            else:
+                return None
         
         for step in self.steps:
             atr = f"execute_{step['type'].lower()}" # Nom de la fonction
@@ -147,11 +158,41 @@ class PythonInterpreter:
 
             if method:
                 method(step)
+                
+            self.values_visualization.append(self.env)
 
-
-    def execute_assign(self, step):
-        pass
-
+    def execute_assign(self, step, return_value=False):
+        """Change the values in the environement by their values"""
+        
+        if type(step["values"]) == int:
+            for var_name in step["targets"]: # Modifier valeurs par une liste comme "targets"
+                self.env[var_name] = step["values"]
+        elif type(step["values"]) == dict and "type" in step["values"]:
+            for var_name in step["targets"]: # Modifier valeurs par une liste comme "targets"
+                self.env[var_name] = self.execute(step["values"])
+                
+    def execute_binop(self, step, return_value=False):
+        """Retourne la valeur d'une opération binaire si return_value est True"""
+        
+        operations = {
+            "Add": lambda a,b : a+b,    
+        }
+        
+        if return_value:
+            a = step["left"]
+            b = step["right"]
+            
+            if type(a) == str:
+                a = self.env[a]
+            if type(b) == str:
+                b = self.env[b]
+            
+            return operations[step["operation"]](a,b)
+        
+    def execute_call(self, step, return_value=False):
+        """Execute la fonction correspondante"""
+        # A continuer
+        
 python_code = """
 a= 2
 b = a + 3
@@ -166,7 +207,9 @@ PST = PythonSyntaxTree(python_code) # Constant
 PST.analyse_syntax_tree()
 PST.print()
 print()
+
 PI = PythonInterpreter(steps=PST.steps)
 PI.execute()
+print(PI.values_visualization)
 
 # https://medium.com/@dev.aguillin/abstract-syntax-tree-python-85d39a53e86d#0c60
